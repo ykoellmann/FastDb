@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Collect staged C++ files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(cpp|hpp)$' || true)
+
+if [[ -z "$STAGED" ]]; then
+    exit 0
+fi
+
+FAILED=0
+
+# --- clang-format ---
+echo "Running clang-format..."
+for FILE in $STAGED; do
+    if ! clang-format --dry-run --Werror "$FILE" 2>/dev/null; then
+        echo "  FAIL (formatting): $FILE"
+        echo "  Run: clang-format -i $FILE"
+        FAILED=1
+    fi
+done
+
+# --- clang-tidy ---
+# Only run if compile_commands.json exists (requires a CMake configure first)
+COMPILE_COMMANDS=$(find . -name compile_commands.json -not -path "./.git/*" | head -1)
+
+if [[ -n "$COMPILE_COMMANDS" ]]; then
+    BUILD_DIR=$(dirname "$COMPILE_COMMANDS")
+    echo "Running clang-tidy (using $COMPILE_COMMANDS)..."
+    for FILE in $STAGED; do
+        if [[ "$FILE" == *.cpp ]]; then
+            if ! clang-tidy -p "$BUILD_DIR" "$FILE" --quiet 2>/dev/null; then
+                echo "  FAIL (tidy): $FILE"
+                FAILED=1
+            fi
+        fi
+    done
+else
+    echo "Skipping clang-tidy (no compile_commands.json found – run CMake configure first)"
+fi
+
+exit $FAILED
