@@ -11,7 +11,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # --- Core library ---
 # Add source files here as you create them, e.g.:
 # target_sources(fastdb_core PRIVATE src/page.cpp)
-add_library(fastdb_core STATIC)
+add_library(fastdb_core STATIC
+    src/fastdb_core.cpp
+    # Add source files here as you create them, e.g.:
+    # src/page.cpp
+)
 target_include_directories(fastdb_core PUBLIC include)
 
 # --- Main executable ---

@@ -1,4 +1,5 @@
 add_executable(FastDb_tests
+    placeholder_test.cpp
     # Add test files here as you create them, e.g.:
     # page_test.cpp
 )
